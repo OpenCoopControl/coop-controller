@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenCoopControl</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #3d5a80;
+            text-align: center;
+        }
+        .status-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-gap: 15px;
+            margin-bottom: 20px;
+        }
+        .status-card {
+            background-color: #e0fbfc;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        .status-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #3d5a80;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .control-btn {
+            background-color: #3d5a80;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 15px;
+            cursor: pointer;
+            flex-grow: 1;
+        }
+        .control-btn:hover {
+            background-color: #293f5c;
+        }
+        .settings-panel {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .settings-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        .settings-label {
+            flex: 1;
+            min-width: 200px;
+        }
+        .settings-control {
+            flex: 2;
+            min-width: 200px;
+        }
+        input[type="number"], select {
+            width: 70px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #3d5a80;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .save-btn {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto 0;
+        }
+        .save-btn:hover {
+            background-color: #388e3c;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-on {
+            background-color: #4caf50;
+        }
+        .status-off {
+            background-color: #f44336;
+        }
+        .language-select {
+            text-align: right;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="language-select">
+            <label for="languageSelect" id="languageLabel">Language:</label>
+            <select id="languageSelect">
+                <option value="en" selected>English</option>
+                <option value="sr">Српски</option>
+            </select>
+        </div>
+
+        <h1 id="title">OpenCoopControl</h1>
+
+        <h2 id="currentStatus">Current Status</h2>
+        <div class="status-panel">
+            <div class="status-card">
+                <h3 id="labelTemperature">Temperature</h3>
+                <div class="status-value" id="temperature">--°C</div>
+            </div>
+            <div class="status-card">
+                <h3 id="labelLight">Light Level</h3>
+                <div class="status-value" id="lightLevel">--%</div>
+            </div>
+            <div class="status-card">
+                <h3 id="labelWater">Water Level</h3>
+                <div class="status-value" id="waterLevel">--%</div>
+            </div>
+        </div>
+
+        <div class="status-panel">
+            <div class="status-card">
+                <h3 id="labelDoor">Door Status</h3>
+                <div class="status-value" id="doorStatus">
+                    <span class="status-indicator" id="doorIndicator"></span>
+                    <span id="doorText">--</span>
+                </div>
+                <div id="doorLastChanged">Last changed: --</div>
+            </div>
+            <div class="status-card">
+                <h3 id="labelFeeder">Feeder Status</h3>
+                <div class="status-value" id="feederStatus">
+                    <span class="status-indicator" id="feederIndicator"></span>
+                    <span id="feederText">--</span>
+                </div>
+                <div id="lastFeedTime">Last fed: --</div>
+            </div>
+        </div>
+
+        <h2 id="manualControls">Manual Controls</h2>
+        <div class="controls">
+            <button class="control-btn" id="openDoorBtn">Open Door</button>
+            <button class="control-btn" id="closeDoorBtn">Close Door</button>
+            <button class="control-btn" id="activateFeederBtn">Activate Feeder</button>
+        </div>
+
+        <h2 id="settingsTitle">Settings</h2>
+        <div class="settings-panel">
+            <div class="settings-row">
+                <div class="settings-label" id="labelAutoDoor">Automatic Door Control:</div>
+                <div class="settings-control">
+                    <label class="switch">
+                        <input type="checkbox" id="doorAutoMode">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-label" id="labelOpenTime">Door Open Time:</div>
+                <div class="settings-control">
+                    <input type="number" id="doorOpenHour" min="0" max="23"> : 00
+                </div>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-label" id="labelCloseTime">Door Close Time:</div>
+                <div class="settings-control">
+                    <input type="number" id="doorCloseHour" min="0" max="23"> : 00
+                </div>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-label" id="labelLightThreshold">Light Threshold (%):</div>
+                <div class="settings-control">
+                    <input type="number" id="lightThreshold" min="0" max="100">
+                </div>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-label" id="labelAutoFeeder">Automatic Feeder:</div>
+                <div class="settings-control">
+                    <label class="switch">
+                        <input type="checkbox" id="feederAutoMode">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-label" id="labelFeedMorning">Morning Feed Time:</div>
+                <div class="settings-control">
+                    <input type="number" id="feedHour1" min="0" max="23"> : 00
+                </div>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-label" id="labelFeedEvening">Evening Feed Time:</div>
+                <div class="settings-control">
+                    <input type="number" id="feedHour2" min="0" max="23"> : 00
+                </div>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-label" id="labelFeedDuration">Feed Duration (seconds):</div>
+                <div class="settings-control">
+                    <input type="number" id="feedAmount" min="1" max="30">
+                </div>
+            </div>
+
+            <button class="save-btn" id="saveSettingsBtn">Save Settings</button>
+        </div>
+    </div>
+
+    <script>
+        let translations = {};
+        let currentLanguage = 'en';
+        
+        async function loadTranslations() {
+            try {
+                const response = await fetch('/translations.json');
+                translations = await response.json();
+                updateLanguage(currentLanguage);
+            } catch (error) {
+                console.error('Error loading translations:', error);
+                fallbackToEnglish();
+            }
+        }
+        
+        function fallbackToEnglish() {
+            translations = {
+                "en": {
+                    "dashboard": {
+                        "title": "Chicken Coop Control",
+                        "currentStatus": "Current Status",
+                        "temperature": "Temperature",
+                        "lightLevel": "Light Level",
+                        "waterLevel": "Water Level",
+                        "doorStatus": "Door Status",
+                        "doorOpen": "Open",
+                        "doorClosed": "Closed",
+                        "feederStatus": "Feeder Status",
+                        "feederActive": "Active",
+                        "feederInactive": "Inactive",
+                        "lastChanged": "Last changed:",
+                        "lastFed": "Last fed:",
+                        "manualControls": "Manual Controls",
+                        "openDoor": "Open Door",
+                        "closeDoor": "Close Door",
+                        "activateFeeder": "Activate Feeder",
+                        "settings": "Settings",
+                        "autoDoor": "Automatic Door Control:",
+                        "doorOpenTime": "Door Open Time:",
+                        "doorCloseTime": "Door Close Time:",
+                        "lightThreshold": "Light Threshold (%):",
+                        "autoFeeder": "Automatic Feeder:",
+                        "morningFeed": "Morning Feed Time:",
+                        "eveningFeed": "Evening Feed Time:",
+                        "feedDuration": "Feed Duration (seconds):",
+                        "saveSettings": "Save Settings",
+                        "language": "Language:"
+                    }
+                }
+            };
+            updateLanguage('en');
+        }
+        
+        function updateLanguage(lang) {
+            currentLanguage = lang;
+            document.documentElement.lang = lang;
+            
+            const t = translations[lang]?.dashboard || translations['en'].dashboard;
+            
+            document.title = t.title;
+            
+            document.getElementById('title').textContent = t.title;
+            document.getElementById('languageLabel').textContent = t.language;
+            document.getElementById('currentStatus').textContent = t.currentStatus;
+            document.getElementById('labelTemperature').textContent = t.temperature;
+            document.getElementById('labelLight').textContent = t.lightLevel;
+            document.getElementById('labelWater').textContent = t.waterLevel;
+            document.getElementById('labelDoor').textContent = t.doorStatus;
+            document.getElementById('labelFeeder').textContent = t.feederStatus;
+            document.getElementById('manualControls').textContent = t.manualControls;
+            document.getElementById('openDoorBtn').textContent = t.openDoor;
+            document.getElementById('closeDoorBtn').textContent = t.closeDoor;
+            document.getElementById('activateFeederBtn').textContent = t.activateFeeder;
+            document.getElementById('settingsTitle').textContent = t.settings;
+            document.getElementById('labelAutoDoor').textContent = t.autoDoor;
+            document.getElementById('labelOpenTime').textContent = t.doorOpenTime;
+            document.getElementById('labelCloseTime').textContent = t.doorCloseTime;
+            document.getElementById('labelLightThreshold').textContent = t.lightThreshold;
+            document.getElementById('labelAutoFeeder').textContent = t.autoFeeder;
+            document.getElementById('labelFeedMorning').textContent = t.morningFeed;
+            document.getElementById('labelFeedEvening').textContent = t.eveningFeed;
+            document.getElementById('labelFeedDuration').textContent = t.feedDuration;
+            document.getElementById('saveSettingsBtn').textContent = t.saveSettings;
+            
+            updateDoorStatusText();
+            updateFeederStatusText();
+        }
+        
+        function updateDoorStatusText() {
+            const t = translations[currentLanguage]?.dashboard || translations['en'].dashboard;
+            const doorText = document.getElementById('doorText');
+            
+            if (doorText.dataset.status === 'open') {
+                doorText.textContent = t.doorOpen;
+            } else if (doorText.dataset.status === 'closed') {
+                doorText.textContent = t.doorClosed;
+            }
+            
+            document.getElementById('doorLastChanged').textContent = t.lastChanged + ' ' + doorText.dataset.timestamp;
+        }
+        
+        function updateFeederStatusText() {
+            const t = translations[currentLanguage]?.dashboard || translations['en'].dashboard;
+            const feederText = document.getElementById('feederText');
+            
+            if (feederText.dataset.status === 'active') {
+                feederText.textContent = t.feederActive;
+            } else if (feederText.dataset.status === 'inactive') {
+                feederText.textContent = t.feederInactive;
+            }
+            
+            document.getElementById('lastFeedTime').textContent = t.lastFed + ' ' + feederText.dataset.timestamp;
+        }
+        
+        document.getElementById('languageSelect').addEventListener('change', function() {
+            updateLanguage(this.value);
+            localStorage.setItem('openCoopLanguage', this.value);
+        });
+        
+        function updateStatus() {
+            fetch('/api/state')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('temperature').textContent = data.temperature.toFixed(1) + '°C';
+                    document.getElementById('lightLevel').textContent = data.lightLevel + '%';
+                    document.getElementById('waterLevel').textContent = data.waterLevel + '%';
+                    
+                    const doorIndicator = document.getElementById('doorIndicator');
+                    const doorText = document.getElementById('doorText');
+                    
+                    if (data.doorOpen) {
+                        doorIndicator.className = 'status-indicator status-on';
+                        doorText.dataset.status = 'open';
+                    } else {
+                        doorIndicator.className = 'status-indicator status-off';
+                        doorText.dataset.status = 'closed';
+                    }
+                    
+                    doorText.dataset.timestamp = data.doorLastChanged || '--';
+                    updateDoorStatusText();
+                    
+                    const feederIndicator = document.getElementById('feederIndicator');
+                    const feederText = document.getElementById('feederText');
+                    
+                    if (data.feederActive) {
+                        feederIndicator.className = 'status-indicator status-on';
+                        feederText.dataset.status = 'active';
+                    } else {
+                        feederIndicator.className = 'status-indicator status-off';
+                        feederText.dataset.status = 'inactive';
+                    }
+                    
+                    feederText.dataset.timestamp = data.lastFeedTime || '--';
+                    updateFeederStatusText();
+                })
+                .catch(error => {
+                    console.error('Error fetching status:', error);
+                });
+        }
+        
+        function loadSettings() {
+            fetch('/api/settings')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('doorAutoMode').checked = data.doorAutoMode;
+                    document.getElementById('doorOpenHour').value = data.doorOpenHour;
+                    document.getElementById('doorCloseHour').value = data.doorCloseHour;
+                    document.getElementById('lightThreshold').value = data.lightThreshold;
+                    document.getElementById('feederAutoMode').checked = data.feederAutoMode;
+                    document.getElementById('feedHour1').value = data.feedHour1;
+                    document.getElementById('feedHour2').value = data.feedHour2;
+                    document.getElementById('feedAmount').value = data.feedAmount;
+                })
+                .catch(error => {
+                    console.error('Error loading settings:', error);
+                });
+        }
+        
+        function saveSettings() {
+            const settings = {
+                doorAutoMode: document.getElementById('doorAutoMode').checked,
+                doorOpenHour: parseInt(document.getElementById('doorOpenHour').value),
+                doorCloseHour: parseInt(document.getElementById('doorCloseHour').value),
+                lightThreshold: parseInt(document.getElementById('lightThreshold').value),
+                feederAutoMode: document.getElementById('feederAutoMode').checked,
+                feedHour1: parseInt(document.getElementById('feedHour1').value),
+                feedHour2: parseInt(document.getElementById('feedHour2').value),
+                feedAmount: parseInt(document.getElementById('feedAmount').value)
+            };
+            
+            fetch('/api/settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(settings)
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Settings saved successfully');
+                } else {
+                    alert('Failed to save settings');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving settings:', error);
+                alert('Error saving settings');
+            });
+        }
+        
+        document.getElementById('openDoorBtn').addEventListener('click', () => {
+            fetch('/api/door/open', { method: 'POST' })
+                .then(() => updateStatus())
+                .catch(error => console.error('Error opening door:', error));
+        });
+        
+        document.getElementById('closeDoorBtn').addEventListener('click', () => {
+            fetch('/api/door/close', { method: 'POST' })
+                .then(() => updateStatus())
+                .catch(error => console.error('Error closing door:', error));
+        });
+        
+        document.getElementById('activateFeederBtn').addEventListener('click', () => {
+            fetch('/api/feeder/activate', { method: 'POST' })
+                .then(() => updateStatus())
+                .catch(error => console.error('Error activating feeder:', error));
+        });
+        
+        document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedLanguage = localStorage.getItem('openCoopLanguage');
+            if (savedLanguage) {
+                document.getElementById('languageSelect').value = savedLanguage;
+            }
+            
+            loadTranslations();
+            
+            updateStatus();
+            loadSettings();
+            
+            setInterval(updateStatus, 5000);
+        });

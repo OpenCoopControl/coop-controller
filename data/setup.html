@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenCoopControl Setup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #3d5a80;
+            text-align: center;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .step {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .step-number {
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            background-color: #3d5a80;
+            color: white;
+            text-align: center;
+            line-height: 25px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="password"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .button {
+            background-color: #3d5a80;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        .button:hover {
+            background-color: #2c4a7c;
+        }
+        .device-id {
+            font-family: monospace;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            word-break: break-all;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .hidden {
+            display: none;
+        }
+        .language-select {
+            text-align: right;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="language-select">
+            <select id="languageSelect">
+                <option value="en" selected>English</option>
+                <option value="sr">Српски</option>
+            </select>
+        </div>
+
+        <div class="logo">
+            <h1>OpenCoopControl</h1>
+            <p id="subtitle"></p>
+        </div>
+
+        <div id="step1" class="step">
+            <h2><span class="step-number">1</span><span id="step1Title"></span></h2>
+            <p id="step1Description"></p>
+            
+            <form id="wifiForm">
+                <div class="form-group">
+                    <label for="ssid" id="wifiNameLabel"></label>
+                    <input type="text" id="ssid" name="ssid" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password" id="wifiPasswordLabel"></label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="coopName" id="coopNameLabel"></label>
+                    <input type="text" id="coopName" name="coopName">
+                </div>
+                
+                <button type="submit" class="button" id="connectButton"></button>
+            </form>
+        </div>
+        
+        <div id="step2" class="step hidden">
+            <h2><span class="step-number">2</span><span id="step2Title"></span></h2>
+            <p id="step2Description"></p>
+            
+            <div class="device-id" id="deviceIdDisplay">
+                loading...
+            </div>
+            
+            <p id="deviceIdNote"></p>
+            
+            <button id="continueButton" class="button"></button>
+        </div>
+    </div>
+
+    <script>
+        let translations = {};
+        let currentLanguage = 'en';
+        
+        async function loadTranslations() {
+            try {
+                const response = await fetch('/translations.json');
+                translations = await response.json();
+                updateLanguage(currentLanguage);
+            } catch (error) {
+                console.error('Error loading translations:', error);
+                fallbackToEnglish();
+            }
+        }
+        
+        function fallbackToEnglish() {
+            translations = {
+                "en": {
+                    "setup": {
+                        "title": "OpenCoopControl Setup",
+                        "subtitle": "First-time device setup",
+                        "step1Title": "Connect to WiFi",
+                        "step1Description": "Enter your home WiFi credentials to connect your coop controller to the internet.",
+                        "wifiName": "WiFi Name (SSID):",
+                        "wifiPassword": "WiFi Password:",
+                        "coopName": "Coop Name (optional):",
+                        "coopNamePlaceholder": "My Chicken Coop",
+                        "connectButton": "Connect",
+                        "step2Title": "Device Registered",
+                        "step2Description": "Your coop controller has been connected successfully! Please note your unique Device ID:",
+                        "deviceIdNote": "You'll need this ID to add the device to your account on the OpenCoopControl dashboard.",
+                        "continueButton": "Continue to Dashboard"
+                    }
+                }
+            };
+            updateLanguage('en');
+        }
+
+        function updateLanguage(lang) {
+            currentLanguage = lang;
+            document.documentElement.lang = lang;
+            
+            const t = translations[lang]?.setup || translations['en'].setup;
+            
+            document.title = t.title;
+            
+            document.getElementById('subtitle').textContent = t.subtitle;
+            document.getElementById('step1Title').textContent = t.step1Title;
+            document.getElementById('step1Description').textContent = t.step1Description;
+            document.getElementById('wifiNameLabel').textContent = t.wifiName;
+            document.getElementById('wifiPasswordLabel').textContent = t.wifiPassword;
+            document.getElementById('coopNameLabel').textContent = t.coopName;
+            document.getElementById('coopName').placeholder = t.coopNamePlaceholder;
+            document.getElementById('connectButton').textContent = t.connectButton;
+            document.getElementById('step2Title').textContent = t.step2Title;
+            document.getElementById('step2Description').textContent = t.step2Description;
+            document.getElementById('deviceIdNote').textContent = t.deviceIdNote;
+            document.getElementById('continueButton').textContent = t.continueButton;
+        }
+        
+        document.getElementById('languageSelect').addEventListener('change', function() {
+            updateLanguage(this.value);
+        });
+        
+        document.getElementById('wifiForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
+            
+            document.getElementById('deviceIdDisplay').textContent = "OCC" + Math.random().toString(36).substring(2, 10).toUpperCase();
+        });
+        
+        document.getElementById('continueButton').addEventListener('click', function() {
+            window.location.href = '/';
+        });
+        
+        document.addEventListener('DOMContentLoaded', loadTranslations);
+    </script>
+</body>
+</html>
