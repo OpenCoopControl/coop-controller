@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OpenCoopControl Setup</title>
+    <script src="/version.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -90,11 +91,25 @@
             text-align: right;
             margin-bottom: 10px;
         }
+        .language-select label {
+            display: inline-block;
+            margin-right: 5px;
+            margin-bottom: 0;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            padding: 10px;
+            border-top: 1px solid #eee;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="language-select">
+            <label for="languageSelect" id="languageLabel">Language:</label>
             <select id="languageSelect">
                 <option value="en" selected>English</option>
                 <option value="sr">Српски</option>
@@ -142,6 +157,10 @@
             
             <button id="continueButton" class="button"></button>
         </div>
+        
+        <div class="footer" id="versionFooter">
+            <span id="firmwareName">OpenCoopControl</span> v<span id="firmwareVersion">0.1.0</span> | <span id="buildTimestamp">Development Build</span>
+        </div>
     </div>
 
     <script>
@@ -175,7 +194,8 @@
                         "step2Title": "Device Registered",
                         "step2Description": "Your coop controller has been connected successfully! Please note your unique Device ID:",
                         "deviceIdNote": "You'll need this ID to add the device to your account on the OpenCoopControl dashboard.",
-                        "continueButton": "Continue to Dashboard"
+                        "continueButton": "Continue to Dashboard",
+                        "language": "Language:"
                     }
                 }
             };
@@ -190,6 +210,7 @@
             
             document.title = t.title;
             
+            document.getElementById('languageLabel').textContent = t.language || "Language:";
             document.getElementById('subtitle').textContent = t.subtitle;
             document.getElementById('step1Title').textContent = t.step1Title;
             document.getElementById('step1Description').textContent = t.step1Description;
@@ -203,9 +224,29 @@
             document.getElementById('deviceIdNote').textContent = t.deviceIdNote;
             document.getElementById('continueButton').textContent = t.continueButton;
         }
+
+        function updateVersionInfo() {
+            if (typeof FIRMWARE_VERSION !== 'undefined') {
+                document.getElementById('firmwareVersion').textContent = FIRMWARE_VERSION;
+                document.getElementById('firmwareName').textContent = FIRMWARE_NAME;
+                document.getElementById('buildTimestamp').textContent = BUILD_TIMESTAMP;
+            } else {
+                fetch('/api/version')
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('firmwareVersion').textContent = data.version;
+                        document.getElementById('firmwareName').textContent = data.name;
+                        document.getElementById('buildTimestamp').textContent = data.buildTimestamp;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching version info:', error);
+                    });
+            }
+        }
         
         document.getElementById('languageSelect').addEventListener('change', function() {
             updateLanguage(this.value);
+            localStorage.setItem('openCoopLanguage', this.value);
         });
         
         document.getElementById('wifiForm').addEventListener('submit', function(e) {
@@ -221,7 +262,15 @@
             window.location.href = '/';
         });
         
-        document.addEventListener('DOMContentLoaded', loadTranslations);
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedLanguage = localStorage.getItem('openCoopLanguage');
+            if (savedLanguage) {
+                document.getElementById('languageSelect').value = savedLanguage;
+            }
+            
+            loadTranslations();
+            updateVersionInfo();
+        });
     </script>
 </body>
 </html>
