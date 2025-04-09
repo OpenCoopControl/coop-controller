@@ -172,8 +172,8 @@ jobs:
         echo 'read -p "Press Enter to exit..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         chmod +x ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
 
-        - name: Prepare release assets with fallbacks
-        run: |
+    - name: Prepare release assets with fallbacks
+      run: |
           echo "Looking for firmware.bin..."
           find ./dist -name "firmware.bin" || echo "firmware.bin not found"
           
