@@ -258,6 +258,7 @@ jobs:
           ./release/partitions.bin
           ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
           ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        token: ${{ secrets.RELEASE_TOKEN }}
           
     - name: Upload test assets
       uses: actions/upload-artifact@v4
