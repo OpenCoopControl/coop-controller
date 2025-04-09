@@ -1,7 +1,7 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-#define FIRMWARE_VERSION "0.1.1"
+#define FIRMWARE_VERSION "0.1.2"
 #define FIRMWARE_NAME "OpenCoopControl"
 #define FIRMWARE_AUTHOR "OpenCoopControl Team"
 
