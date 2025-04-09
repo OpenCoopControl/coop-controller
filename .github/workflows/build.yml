@@ -172,80 +172,79 @@ jobs:
         echo 'read -p "Press Enter to exit..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         chmod +x ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
 
-    - name: Prepare release assets with fallbacks
-      run: |
-        # Debug what files are available
-        echo "Looking for firmware.bin..."
-        find ./dist -name "firmware.bin" || echo "firmware.bin not found"
-        
-        echo "Looking for any SPIFFS files..."
-        find ./dist -name "*spiffs*" || echo "No SPIFFS files found"
-        
-        echo "Looking for bootloader.bin..."
-        find ./dist -name "bootloader.bin" || echo "bootloader.bin not found"
-        
-        echo "Looking for partitions.bin..."
-        find ./dist -name "partitions.bin" || echo "partitions.bin not found"
-        
-        # Copy firmware with fallbacks
-        if [ -f "./dist/firmware.bin" ]; then
-          cp ./dist/firmware.bin ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_firmware.bin
-        else
-          FIRMWARE_ALT=$(find ./dist -name "*firmware*.bin" | head -1)
-          if [ ! -z "$FIRMWARE_ALT" ]; then
-            echo "Using alternative firmware file: $FIRMWARE_ALT"
-            cp "$FIRMWARE_ALT" ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_firmware.bin
+        - name: Prepare release assets with fallbacks
+        run: |
+          echo "Looking for firmware.bin..."
+          find ./dist -name "firmware.bin" || echo "firmware.bin not found"
+          
+          echo "Looking for any SPIFFS files..."
+          find ./dist -name "*spiffs*" || echo "No SPIFFS files found"
+          
+          echo "Looking for bootloader.bin..."
+          find ./dist -name "bootloader.bin" || echo "bootloader.bin not found"
+          
+          echo "Looking for partitions.bin..."
+          find ./dist -name "partitions.bin" || echo "partitions.bin not found"
+          
+          # Copy firmware with fallbacks
+          if [ -f "./dist/firmware.bin" ] && [ -s "./dist/firmware.bin" ]; then
+            cp ./dist/firmware.bin ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_firmware.bin
           else
-            echo "No firmware file found!"
-            exit 1
+            FIRMWARE_ALT=$(find ./dist -name "*firmware*.bin" | head -1)
+            if [ ! -z "$FIRMWARE_ALT" ] && [ -s "$FIRMWARE_ALT" ]; then
+              echo "Using alternative firmware file: $FIRMWARE_ALT"
+              cp "$FIRMWARE_ALT" ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_firmware.bin
+            else
+              echo "No valid firmware file found!"
+              exit 1
+            fi
           fi
-        fi
-        
-        # Copy SPIFFS with fallbacks
-        if [ -f "./dist/spiffs.bin" ]; then
-          cp ./dist/spiffs.bin ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_spiffs.bin
-        else
-          SPIFFS_ALT=$(find ./dist -name "*spiffs*.bin" | head -1)
-          if [ ! -z "$SPIFFS_ALT" ]; then
-            echo "Using alternative SPIFFS file: $SPIFFS_ALT"
-            cp "$SPIFFS_ALT" ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_spiffs.bin
+          
+          # Copy SPIFFS with fallbacks
+          if [ -f "./dist/spiffs.bin" ] && [ -s "./dist/spiffs.bin" ]; then
+            cp ./dist/spiffs.bin ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_spiffs.bin
           else
-            echo "Creating empty SPIFFS file for testing"
-            touch ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_spiffs.bin
+            SPIFFS_ALT=$(find ./dist -name "*spiffs*.bin" | head -1)
+            if [ ! -z "$SPIFFS_ALT" ] && [ -s "$SPIFFS_ALT" ]; then
+              echo "Using alternative SPIFFS file: $SPIFFS_ALT"
+              cp "$SPIFFS_ALT" ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_spiffs.bin
+            else
+              echo "No valid SPIFFS file found, skipping (optional)"
+              # Remove or comment out: touch ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_spiffs.bin
+            fi
           fi
-        fi
-        
-        # Copy bootloader with fallbacks
-        if [ -f "./dist/bootloader.bin" ]; then
-          cp ./dist/bootloader.bin ./release/bootloader.bin
-        else
-          BOOTLOADER_ALT=$(find ./dist -name "*bootloader*.bin" | head -1)
-          if [ ! -z "$BOOTLOADER_ALT" ]; then
-            echo "Using alternative bootloader file: $BOOTLOADER_ALT"
-            cp "$BOOTLOADER_ALT" ./release/bootloader.bin
+          
+          # Copy bootloader with fallbacks
+          if [ -f "./dist/bootloader.bin" ] && [ -s "./dist/bootloader.bin" ]; then
+            cp ./dist/bootloader.bin ./release/bootloader.bin
           else
-            echo "No bootloader file found!"
-            exit 1
+            BOOTLOADER_ALT=$(find ./dist -name "*bootloader*.bin" | head -1)
+            if [ ! -z "$BOOTLOADER_ALT" ] && [ -s "$BOOTLOADER_ALT" ]; then
+              echo "Using alternative bootloader file: $BOOTLOADER_ALT"
+              cp "$BOOTLOADER_ALT" ./release/bootloader.bin
+            else
+              echo "No bootloader file found!"
+              exit 1
+            fi
           fi
-        fi
-        
-        # Copy partitions with fallbacks
-        if [ -f "./dist/partitions.bin" ]; then
-          cp ./dist/partitions.bin ./release/partitions.bin
-        else
-          PARTITIONS_ALT=$(find ./dist -name "*partitions*.bin" | head -1)
-          if [ ! -z "$PARTITIONS_ALT" ]; then
-            echo "Using alternative partitions file: $PARTITIONS_ALT"
-            cp "$PARTITIONS_ALT" ./release/partitions.bin
+          
+          # Copy partitions with fallbacks
+          if [ -f "./dist/partitions.bin" ] && [ -s "./dist/partitions.bin" ]; then
+            cp ./dist/partitions.bin ./release/partitions.bin
           else
-            echo "No partitions file found!"
-            exit 1
+            PARTITIONS_ALT=$(find ./dist -name "*partitions*.bin" | head -1)
+            if [ ! -z "$PARTITIONS_ALT" ] && [ -s "$PARTITIONS_ALT" ]; then
+              echo "Using alternative partitions file: $PARTITIONS_ALT"
+              cp "$PARTITIONS_ALT" ./release/partitions.bin
+            else
+              echo "No partitions file found!"
+              exit 1
+            fi
           fi
-        fi
-        
-        echo "=== Contents of release directory ==="
-        ls -la ./release/
-        echo "=================================="
+          
+          echo "=== Contents of release directory ==="
+          ls -la ./release/
+          echo "=================================="
 
     - name: Upload release assets
       uses: softprops/action-gh-release@v2
@@ -253,7 +252,7 @@ jobs:
       with:
         files: |
           ./release/opencoopcontrol_${{ github.ref_name }}_firmware.bin
-          ./release/opencoopcontrol_${{ github.ref_name }}_spiffs.bin
+          ?./release/opencoopcontrol_${{ github.ref_name }}_spiffs.bin
           ./release/bootloader.bin
           ./release/partitions.bin
           ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
