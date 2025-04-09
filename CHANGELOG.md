@@ -36,3 +36,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - N/A (Initial release)
+
+## [0.1.1] - 2025-04-09
+
+### Added
+- N/A
+
+### Changed
+- Files generate fixes
+
+### Fixed
+- N/A
