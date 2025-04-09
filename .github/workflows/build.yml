@@ -176,6 +176,10 @@ jobs:
       run: |
           echo "Looking for firmware.bin..."
           find ./dist -name "firmware.bin" || echo "firmware.bin not found"
+          if [ -f "./dist/firmware.bin" ]; then
+            echo "firmware.bin size:"
+            ls -l ./dist/firmware.bin
+          fi
           
           echo "Looking for any SPIFFS files..."
           find ./dist -name "*spiffs*" || echo "No SPIFFS files found"
@@ -195,7 +199,8 @@ jobs:
               echo "Using alternative firmware file: $FIRMWARE_ALT"
               cp "$FIRMWARE_ALT" ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_firmware.bin
             else
-              echo "No valid firmware file found!"
+              echo "Error: No non-empty firmware file found!"
+              ls -la ./dist/
               exit 1
             fi
           fi
@@ -210,7 +215,6 @@ jobs:
               cp "$SPIFFS_ALT" ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_spiffs.bin
             else
               echo "No valid SPIFFS file found, skipping (optional)"
-              # Remove or comment out: touch ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_spiffs.bin
             fi
           fi
           
