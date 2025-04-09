@@ -21,5 +21,7 @@ void handleUpdateSettings();
 void handleDoorOpen();
 void handleDoorClose();
 void handleFeederActivate();
+void handleGetVersion();
+void handleVersionJs();
 
 #endif

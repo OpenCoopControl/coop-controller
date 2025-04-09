@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: opencoopcontrol-dev
+    volumes:
+      - .:/opencoopcontrol
+      - platformio_cache:/root/.platformio
+    # Enable USB passthrough for flashing ESP32 devices
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+      - "/dev/ttyACM0:/dev/ttyACM0"
+    # Keep the container running
+    tty: true
+    stdin_open: true
+
+volumes:
+  platformio_cache:
+    # Persistent cache for PlatformIO

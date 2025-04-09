@@ -139,40 +139,40 @@
  }
  
  bool loadActuatorSettings() {
-     if (!SPIFFS.begin(true)) {
-            Serial.println("SPIFFS Mount Failed");
-            return false;
-          }
-     if (!SPIFFS.exists(SETTINGS_FILE)) {
-            Serial.println("Settings file does not exist");
-            return false;
-          }
-   
-     fs::File file = SPIFFS.open(SETTINGS_FILE, "r");
-     if (!file) {
-          return false;
-      }
-   StaticJsonDocument<512> doc;
-   auto error = deserializeJson(doc, file);
-   file.close();
-   
-   if (error) {
-     Serial.println("Failed to parse settings file");
-     return false;
-   }
-   
-   settings.doorAutoMode = doc["doorAutoMode"] | DEFAULT_DOOR_AUTO_MODE;
-   settings.doorOpenHour = doc["doorOpenHour"] | DEFAULT_DOOR_OPEN_HOUR;
-   settings.doorCloseHour = doc["doorCloseHour"] | DEFAULT_DOOR_CLOSE_HOUR;
-   settings.lightThreshold = doc["lightThreshold"] | DEFAULT_LIGHT_THRESHOLD;
-   settings.feederAutoMode = doc["feederAutoMode"] | DEFAULT_FEEDER_AUTO_MODE;
-   settings.feedHour1 = doc["feedHour1"] | DEFAULT_FEED_HOUR_1;
-   settings.feedHour2 = doc["feedHour2"] | DEFAULT_FEED_HOUR_2;
-   settings.feedAmount = doc["feedAmount"] | DEFAULT_FEED_AMOUNT;
-   
-   Serial.println("Settings loaded successfully");
-   return true;
- }
+  if (!SPIFFS.begin(true)) {
+      Serial.println("SPIFFS Mount Failed");
+      return false;
+  }
+  if (!SPIFFS.exists(SETTINGS_FILE)) {
+      Serial.println("Settings file does not exist");
+      return false;
+  }
+ 
+  fs::File file = SPIFFS.open(SETTINGS_FILE, "r");
+  if (!file) {
+      return false;
+  }
+  JsonDocument doc;
+  auto error = deserializeJson(doc, file);
+  file.close();
+ 
+  if (error) {
+      Serial.println("Failed to parse settings file");
+      return false;
+  }
+ 
+  settings.doorAutoMode = doc["doorAutoMode"] | DEFAULT_DOOR_AUTO_MODE;
+  settings.doorOpenHour = doc["doorOpenHour"] | DEFAULT_DOOR_OPEN_HOUR;
+  settings.doorCloseHour = doc["doorCloseHour"] | DEFAULT_DOOR_CLOSE_HOUR;
+  settings.lightThreshold = doc["lightThreshold"] | DEFAULT_LIGHT_THRESHOLD;
+  settings.feederAutoMode = doc["feederAutoMode"] | DEFAULT_FEEDER_AUTO_MODE;
+  settings.feedHour1 = doc["feedHour1"] | DEFAULT_FEED_HOUR_1;
+  settings.feedHour2 = doc["feedHour2"] | DEFAULT_FEED_HOUR_2;
+  settings.feedAmount = doc["feedAmount"] | DEFAULT_FEED_AMOUNT;
+ 
+  Serial.println("Settings loaded successfully");
+  return true;
+}
  
  bool saveActuatorSettings() {
    JsonDocument doc;
