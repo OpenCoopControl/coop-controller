@@ -6,6 +6,8 @@ on:
   pull_request:
     branches: [ main, develop, release/* ]
   workflow_dispatch:
+  release:
+    types: [created]
 
 jobs:
   build:
@@ -46,7 +48,7 @@ jobs:
 
   release-assets:
     runs-on: ubuntu-latest
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' && github.event.action == 'created'
     needs: build
     
     steps:
