@@ -1,220 +1,203 @@
-name: Build and Release OpenCoopControl
-
+name: CI/CD for OpenCoopControl
 on:
   push:
     branches: [ main, develop, release/* ]
-    tags:
-      - 'v*'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, release/* ]
+  workflow_dispatch:
+  release:
+    types: [ created 
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Cache PlatformIO
-        uses: actions/cache@v3
-        with:
-          path: ~/.platformio
-          key: ${{ runner.os }}-platformio-${{ hashFiles('**/platformio.ini') }}
-          restore-keys: |
-            ${{ runner.os }}-platformio-
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-      
-      - name: Install PlatformIO
-        run: |
-          python -m pip install --upgrade pip
-          pip install platformio
-      
-      - name: Build Firmware
-        run: pio run
-      
-      - name: Upload Firmware as Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: firmware
-          path: |
-            .pio/build/esp32dev/firmware.bin
-            .pio/build/esp32dev/spiffs.bin
-            .pio/build/esp32dev/bootloader.bin
-            .pio/build/esp32dev/partitions.bin
-      
-      # Only run if this is a tag push
-      - name: Create Release
-        id: create_release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-      
-      - name: Upload Firmware Binary to Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .pio/build/esp32dev/firmware.bin
-          asset_name: opencoopcontrol_${{ github.ref_name }}_firmware.bin
-          asset_content_type: application/octet-stream
-      
-      - name: Upload SPIFFS Binary to Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .pio/build/esp32dev/spiffs.bin
-          asset_name: opencoopcontrol_${{ github.ref_name }}_spiffs.bin
-          asset_content_type: application/octet-stream
-      
-      - name: Upload Bootloader Binary to Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .pio/build/esp32dev/bootloader.bin
-          asset_name: bootloader.bin
-          asset_content_type: application/octet-stream
-      
-      - name: Upload Partition Table Binary to Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .pio/build/esp32dev/partitions.bin
-          asset_name: partitions.bin
-          asset_content_type: application/octet-stream
-      
-      - name: Create Flash Scripts
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          echo '@echo off' > flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'echo OpenCoopControl Flashing Tool v${{ github.ref_name }}' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'echo ============================' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'echo.' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'set PORT=COM3' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'set FIRMWARE=opencoopcontrol_${{ github.ref_name }}_firmware.bin' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'set SPIFFS=opencoopcontrol_${{ github.ref_name }}_spiffs.bin' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'echo Select flashing mode:' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'echo 1. Update firmware only (preserves settings)' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'echo 2. Full installation (erases all settings)' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'echo.' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'set /p MODE="Enter option (1/2): "' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'if "%MODE%"=="1" (' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    echo.' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    echo Updating firmware only - settings will be preserved...' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    echo.' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    echo Flashing firmware...' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash -z 0x10000 %FIRMWARE%' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    echo.' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    echo Firmware update complete!' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo ') else if "%MODE%"=="2" (' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    echo.' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    echo Performing full installation - ALL SETTINGS WILL BE ERASED!' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    echo.' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    echo Erasing flash...' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 erase_flash' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    echo Flashing bootloader and partition table...' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x1000 bootloader.bin 0x8000 partitions.bin' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    echo Flashing firmware...' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x10000 %FIRMWARE%' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    echo Flashing filesystem...' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x310000 %SPIFFS%' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    echo.' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    echo Full installation complete! Device will start in setup mode.' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo ') else (' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    echo Invalid option selected. Please run the script again.' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo '    exit /b 1' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo ')' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'echo.' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'echo Note: If you need to change the COM port, edit this file and change:' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'echo   set PORT=COM3' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'echo to your correct port number.' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'echo.' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
-          echo 'pause' >> flash_opencoopcontrol_${{ github.ref_name }}.bat
+    - uses: actions/checkout@v4
+    
+    - name: Cache PlatformIO dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.platformio
+        key: ${{ runner.os }}-platformio-${{ hashFiles('platformio.ini') }}
+        restore-keys: ${{ runner.os }}-platformio-
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install PlatformIO
+      run: |
+        python -m pip install --upgrade pip
+        pip install platformio
+    
+    - name: Build firmware
+      run: platformio run -e esp32dev
+    
+    - name: Upload firmware artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: firmware
+        path: |
+          .pio/build/esp32dev/firmware.bin
+          .pio/build/esp32dev/spiffs.bin
+          .pio/build/esp32dev/bootloader.bin
+          .pio/build/esp32dev/partitions.bin
 
-          # Create shell script for Linux/Mac
-          echo '#!/bin/bash' > flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'echo "OpenCoopControl Flashing Tool v${{ github.ref_name }}"' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'echo "============================"' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'echo' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'PORT="/dev/ttyUSB0"' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'FIRMWARE="opencoopcontrol_${{ github.ref_name }}_firmware.bin"' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'SPIFFS="opencoopcontrol_${{ github.ref_name }}_spiffs.bin"' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'echo "Select flashing mode:"' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'echo "1. Update firmware only (preserves settings)"' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'echo "2. Full installation (erases all settings)"' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'echo' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'read -p "Enter option (1/2): " MODE' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'if [ "$MODE" = "1" ]; then' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    echo' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    echo "Updating firmware only - settings will be preserved..."' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    echo' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    echo "Flashing firmware..."' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    esptool.py --chip esp32 --port $PORT --baud 921600 write_flash -z 0x10000 $FIRMWARE' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    echo' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    echo "Firmware update complete!"' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'elif [ "$MODE" = "2" ]; then' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    echo' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    echo "Performing full installation - ALL SETTINGS WILL BE ERASED!"' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    echo' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    echo "Erasing flash..."' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    esptool.py --chip esp32 --port $PORT --baud 921600 erase_flash' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    echo "Flashing bootloader and partition table..."' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    esptool.py --chip esp32 --port $PORT --baud 921600 write_flash 0x1000 bootloader.bin 0x8000 partitions.bin' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    echo "Flashing firmware..."' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    esptool.py --chip esp32 --port $PORT --baud 921600 write_flash 0x10000 $FIRMWARE' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    echo "Flashing filesystem..."' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    esptool.py --chip esp32 --port $PORT --baud 921600 write_flash 0x310000 $SPIFFS' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    echo' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    echo "Full installation complete! Device will start in setup mode."' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'else' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    echo "Invalid option selected. Please run the script again."' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo '    exit 1' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'fi' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'echo' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'echo "Note: If you need to change the port, edit this file and change:"' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'echo "  PORT=\"/dev/ttyUSB0\""' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'echo "to your correct port."' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'echo' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          echo 'read -p "Press Enter to exit..."' >> flash_opencoopcontrol_${{ github.ref_name }}.sh
-          chmod +x flash_opencoopcontrol_${{ github.ref_name }}.sh
-      
-      - name: Upload Windows Flash Script to Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: flash_opencoopcontrol_${{ github.ref_name }}.bat
-          asset_name: flash_opencoopcontrol_${{ github.ref_name }}.bat
-          asset_content_type: application/octet-stream
-      
-      - name: Upload Linux/Mac Flash Script to Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: flash_opencoopcontrol_${{ github.ref_name }}.sh
-          asset_name: flash_opencoopcontrol_${{ github.ref_name }}.sh
-          asset_content_type: application/octet-stream
+  release-assets:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    needs: build
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download firmware artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: firmware
+        path: ./dist
+    
+    - name: Create release directories
+      run: mkdir -p ./release
+    
+    - name: Generate Windows flash script
+      run: |
+        echo '@echo off' > ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'echo OpenCoopControl Flashing Tool' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'echo ============================' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'set PORT=COM3' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'set FIRMWARE=opencoopcontrol_${{ github.ref_name }}_firmware.bin' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'set SPIFFS=opencoopcontrol_${{ github.ref_name }}_spiffs.bin' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'echo Select flashing mode:' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'echo 1. Update firmware only (preserves settings)' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'echo 2. Full installation (erases all settings)' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'set /p MODE="Enter option (1/2): "' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'if "%MODE%"=="1" (' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    echo Updating firmware only - settings will be preserved...' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    echo Flashing firmware...' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash -z 0x10000 %FIRMWARE%' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    echo Firmware update complete!' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo ') else if "%MODE%"=="2" (' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    echo Performing full installation - ALL SETTINGS WILL BE ERASED!' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    echo Erasing flash...' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 erase_flash' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    echo Flashing bootloader and partition table...' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x1000 bootloader.bin 0x8000 partitions.bin' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    echo Flashing firmware...' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x10000 %FIRMWARE%' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    echo Flashing filesystem...' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x310000 %SPIFFS%' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    echo Full installation complete! Device will start in setup mode.' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo ') else (' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    echo Invalid option selected. Please run the script again.' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '    exit /b 1' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo ')' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'echo Note: If you need to change the COM port, edit this file and change:' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'echo   set PORT=COM3' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'echo to your correct port number.' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo '' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+        echo 'pause' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+
+    - name: Generate Linux/Mac flash script
+      run: |
+        echo '#!/bin/bash' > ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'echo "OpenCoopControl Flashing Tool"' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'echo "============================"' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'PORT="/dev/ttyUSB0"' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'FIRMWARE="opencoopcontrol_${{ github.ref_name }}_firmware.bin"' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'SPIFFS="opencoopcontrol_${{ github.ref_name }}_spiffs.bin"' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'echo "Select flashing mode:"' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'echo "1. Update firmware only (preserves settings)"' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'echo "2. Full installation (erases all settings)"' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'read -p "Enter option (1/2): " MODE' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'if [ "$MODE" = "1" ]; then' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    echo "Updating firmware only - settings will be preserved..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    echo "Flashing firmware..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    esptool.py --chip esp32 --port $PORT --baud 921600 write_flash -z 0x10000 $FIRMWARE' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    echo "Firmware update complete!"' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'elif [ "$MODE" = "2" ]; then' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    echo "Performing full installation - ALL SETTINGS WILL BE ERASED!"' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    echo "Erasing flash..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    esptool.py --chip esp32 --port $PORT --baud 921600 erase_flash' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    echo "Flashing bootloader and partition table..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    esptool.py --chip esp32 --port $PORT --baud 921600 write_flash 0x1000 bootloader.bin 0x8000 partitions.bin' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    echo "Flashing firmware..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    esptool.py --chip esp32 --port $PORT --baud 921600 write_flash 0x10000 $FIRMWARE' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    echo "Flashing filesystem..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    esptool.py --chip esp32 --port $PORT --baud 921600 write_flash 0x310000 $SPIFFS' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    echo "Full installation complete! Device will start in setup mode."' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'else' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    echo "Invalid option selected. Please run the script again."' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '    exit 1' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'fi' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'echo "Note: If you need to change the port, edit this file and change:"' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'echo "  PORT=\"/dev/ttyUSB0\""' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'echo "to your correct port."' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo '' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        echo 'read -p "Press Enter to exit..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+        chmod +x ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
+
+    - name: Prepare release assets
+      run: |
+        # Rename firmware files with version
+        cp ./dist/firmware.bin ./release/opencoopcontrol_${{ github.ref_name }}_firmware.bin
+        cp ./dist/spiffs.bin ./release/opencoopcontrol_${{ github.ref_name }}_spiffs.bin
+        cp ./dist/bootloader.bin ./release/bootloader.bin
+        cp ./dist/partitions.bin ./release/partitions.bin
+
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          ./release/opencoopcontrol_${{ github.ref_name }}_firmware.bin
+          ./release/opencoopcontrol_${{ github.ref_name }}_spiffs.bin
+          ./release/bootloader.bin
+          ./release/partitions.bin
+          ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
+          ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
