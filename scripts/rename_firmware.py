@@ -1,5 +1,5 @@
 import os
-import env
+Import("env")
 
 def post_firmware_bin(source, target, env):
     firmware_path = str(target[0])
