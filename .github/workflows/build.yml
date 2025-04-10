@@ -142,7 +142,7 @@ jobs:
         echo '    echo Updating firmware only - settings will be preserved...' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '    echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '    echo Flashing firmware...' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash -z 0x10000 %FIRMWARE%' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
+        echo '    esptool.py --chip esp32 --port %PORT% --baud 115200 write_flash -z 0x10000 %FIRMWARE%' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '    if %ERRORLEVEL% neq 0 (' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '        echo Error flashing firmware. Please try again.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '        goto :exit' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
@@ -154,26 +154,26 @@ jobs:
         echo '    echo Performing full installation - ALL SETTINGS WILL BE ERASED!' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '    echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '    echo Erasing flash...' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 erase_flash' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
+        echo '    esptool.py --chip esp32 --port %PORT% --baud 115200 erase_flash' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '    if %ERRORLEVEL% neq 0 (' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '        echo Error erasing flash. Please try again.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '        goto :exit' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '    )' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '    echo Flashing bootloader and partition table...' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x1000 %BOOTLOADER% 0x8000 %PARTITIONS%' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
+        echo '    esptool.py --chip esp32 --port %PORT% --baud 115200 write_flash 0x1000 %BOOTLOADER% 0x8000 %PARTITIONS%' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '    if %ERRORLEVEL% neq 0 (' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '        echo Error flashing bootloader or partitions. Please try again.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '        goto :exit' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '    )' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '    echo Flashing firmware...' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x10000 %FIRMWARE%' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
+        echo '    esptool.py --chip esp32 --port %PORT% --baud 115200 write_flash 0x10000 %FIRMWARE%' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '    if %ERRORLEVEL% neq 0 (' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '        echo Error flashing firmware. Please try again.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '        goto :exit' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '    )' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '    if "%SPIFFS_EXISTS%"=="true" (' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '        echo Flashing filesystem...' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '        esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x310000 %SPIFFS%' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
+        echo '        esptool.py --chip esp32 --port %PORT% --baud 115200 write_flash 0x310000 %SPIFFS%' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '        if %ERRORLEVEL% neq 0 (' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '            echo Error flashing filesystem. Please try again.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '            goto :exit' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
@@ -323,7 +323,7 @@ jobs:
         echo '    echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '    echo "Flashing firmware..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    esptool.py --chip esp32 --port "$PORT" --baud 921600 write_flash -z 0x10000 "$FIRMWARE"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
+        echo '    esptool.py --chip esp32 --port "$PORT" --baud 115200 write_flash -z 0x10000 "$FIRMWARE"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '    if [ $? -ne 0 ]; then' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '        echo "Error flashing firmware. Please try again."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '        exit 1' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
@@ -338,21 +338,21 @@ jobs:
         echo '    echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '    echo "Erasing flash..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    esptool.py --chip esp32 --port "$PORT" --baud 921600 erase_flash' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
+        echo '    esptool.py --chip esp32 --port "$PORT" --baud 115200 erase_flash' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '    if [ $? -ne 0 ]; then' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '        echo "Error erasing flash. Please try again."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '        exit 1' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '    fi' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '    echo "Flashing bootloader and partition table..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    esptool.py --chip esp32 --port "$PORT" --baud 921600 write_flash 0x1000 "$BOOTLOADER" 0x8000 "$PARTITIONS"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
+        echo '    esptool.py --chip esp32 --port "$PORT" --baud 115200 write_flash 0x1000 "$BOOTLOADER" 0x8000 "$PARTITIONS"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '    if [ $? -ne 0 ]; then' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '        echo "Error flashing bootloader or partitions. Please try again."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '        exit 1' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '    fi' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '    echo "Flashing firmware..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    esptool.py --chip esp32 --port "$PORT" --baud 921600 write_flash 0x10000 "$FIRMWARE"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
+        echo '    esptool.py --chip esp32 --port "$PORT" --baud 115200 write_flash 0x10000 "$FIRMWARE"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '    if [ $? -ne 0 ]; then' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '        echo "Error flashing firmware. Please try again."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '        exit 1' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
@@ -360,7 +360,7 @@ jobs:
         echo '    ' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '    if [ "$SPIFFS_EXISTS" = true ]; then' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '        echo "Flashing filesystem..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '        esptool.py --chip esp32 --port "$PORT" --baud 921600 write_flash 0x310000 "$SPIFFS"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
+        echo '        esptool.py --chip esp32 --port "$PORT" --baud 115200 write_flash 0x310000 "$SPIFFS"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '        if [ $? -ne 0 ]; then' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '            echo "Error flashing filesystem. Please try again."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         echo '            exit 1' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh

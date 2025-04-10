@@ -60,7 +60,7 @@ if "%MODE%"=="1" (
     echo.
     
     echo Flashing firmware...
-    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash -z 0x10000 %FIRMWARE%
+    esptool.py --chip esp32 --port %PORT% --baud 115200 write_flash -z 0x10000 %FIRMWARE%
     if %ERRORLEVEL% neq 0 (
         echo Error flashing firmware. Please try again.
         goto :exit
@@ -74,21 +74,21 @@ if "%MODE%"=="1" (
     echo.
     
     echo Erasing flash...
-    esptool.py --chip esp32 --port %PORT% --baud 921600 erase_flash
+    esptool.py --chip esp32 --port %PORT% --baud 115200 erase_flash
     if %ERRORLEVEL% neq 0 (
         echo Error erasing flash. Please try again.
         goto :exit
     )
     
     echo Flashing bootloader and partition table...
-    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x1000 %BOOTLOADER% 0x8000 %PARTITIONS%
+    esptool.py --chip esp32 --port %PORT% --baud 115200 write_flash 0x1000 %BOOTLOADER% 0x8000 %PARTITIONS%
     if %ERRORLEVEL% neq 0 (
         echo Error flashing bootloader or partitions. Please try again.
         goto :exit
     )
     
     echo Flashing firmware...
-    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x10000 %FIRMWARE%
+    esptool.py --chip esp32 --port %PORT% --baud 115200 write_flash 0x10000 %FIRMWARE%
     if %ERRORLEVEL% neq 0 (
         echo Error flashing firmware. Please try again.
         goto :exit
@@ -96,7 +96,7 @@ if "%MODE%"=="1" (
     
     if "%SPIFFS_EXISTS%"=="true" (
         echo Flashing filesystem...
-        esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x310000 %SPIFFS%
+        esptool.py --chip esp32 --port %PORT% --baud 115200 write_flash 0x310000 %SPIFFS%
         if %ERRORLEVEL% neq 0 (
             echo Error flashing filesystem. Please try again.
             goto :exit

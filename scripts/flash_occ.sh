@@ -127,7 +127,7 @@ if [ "$MODE" = "1" ]; then
     echo
     
     echo "Flashing firmware..."
-    esptool.py --chip esp32 --port "$PORT" --baud 921600 write_flash -z 0x10000 "$FIRMWARE"
+    esptool.py --chip esp32 --port "$PORT" --baud 115200 write_flash -z 0x10000 "$FIRMWARE"
     if [ $? -ne 0 ]; then
         echo "Error flashing firmware. Please try again."
         exit 1
@@ -142,21 +142,21 @@ elif [ "$MODE" = "2" ]; then
     echo
     
     echo "Erasing flash..."
-    esptool.py --chip esp32 --port "$PORT" --baud 921600 erase_flash
+    esptool.py --chip esp32 --port "$PORT" --baud 115200 erase_flash
     if [ $? -ne 0 ]; then
         echo "Error erasing flash. Please try again."
         exit 1
     fi
     
     echo "Flashing bootloader and partition table..."
-    esptool.py --chip esp32 --port "$PORT" --baud 921600 write_flash 0x1000 "$BOOTLOADER" 0x8000 "$PARTITIONS"
+    esptool.py --chip esp32 --port "$PORT" --baud 115200 write_flash 0x1000 "$BOOTLOADER" 0x8000 "$PARTITIONS"
     if [ $? -ne 0 ]; then
         echo "Error flashing bootloader or partitions. Please try again."
         exit 1
     fi
     
     echo "Flashing firmware..."
-    esptool.py --chip esp32 --port "$PORT" --baud 921600 write_flash 0x10000 "$FIRMWARE"
+    esptool.py --chip esp32 --port "$PORT" --baud 115200 write_flash 0x10000 "$FIRMWARE"
     if [ $? -ne 0 ]; then
         echo "Error flashing firmware. Please try again."
         exit 1
@@ -164,7 +164,7 @@ elif [ "$MODE" = "2" ]; then
     
     if [ "$SPIFFS_EXISTS" = true ]; then
         echo "Flashing filesystem..."
-        esptool.py --chip esp32 --port "$PORT" --baud 921600 write_flash 0x310000 "$SPIFFS"
+        esptool.py --chip esp32 --port "$PORT" --baud 115200 write_flash 0x310000 "$SPIFFS"
         if [ $? -ne 0 ]; then
             echo "Error flashing filesystem. Please try again."
             exit 1
