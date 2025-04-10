@@ -81,94 +81,320 @@ jobs:
     
     - name: Generate Windows flash script
       run: |
-        echo '@echo off' > ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'echo OpenCoopControl Flashing Tool' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'echo ============================' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'set PORT=COM3' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'set FIRMWARE=opencoopcontrol_${{ github.ref_name || 'test' }}_firmware.bin' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'set SPIFFS=opencoopcontrol_${{ github.ref_name || 'test' }}_spiffs.bin' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'echo Select flashing mode:' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'echo 1. Update firmware only (preserves settings)' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'echo 2. Full installation (erases all settings)' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'set /p MODE="Enter option (1/2): "' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'if "%MODE%"=="1" (' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    echo Updating firmware only - settings will be preserved...' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    echo Flashing firmware...' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash -z 0x10000 %FIRMWARE%' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    echo Firmware update complete!' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo ') else if "%MODE%"=="2" (' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    echo Performing full installation - ALL SETTINGS WILL BE ERASED!' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    echo Erasing flash...' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 erase_flash' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    echo Flashing bootloader and partition table...' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x1000 bootloader.bin 0x8000 partitions.bin' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    echo Flashing firmware...' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x10000 %FIRMWARE%' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    echo Flashing filesystem...' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x310000 %SPIFFS%' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    echo Full installation complete! Device will start in setup mode.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo ') else (' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    echo Invalid option selected. Please run the script again.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo '    exit /b 1' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo ')' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'echo Note: If you need to change the COM port, edit this file and change:' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'echo   set PORT=COM3' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'echo to your correct port number.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'pause' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
+        cat > ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat << 'EOL'
+        @echo off
+        echo OpenCoopControl Flashing Tool
+        echo ============================
+        echo.
 
-    - name: Generate Linux/Mac flash script
-      run: |
-        echo '#!/bin/bash' > ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'echo "OpenCoopControl Flashing Tool"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'echo "============================"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'PORT="/dev/ttyUSB0"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'FIRMWARE="opencoopcontrol_${{ github.ref_name || 'test' }}_firmware.bin"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'SPIFFS="opencoopcontrol_${{ github.ref_name || 'test' }}_spiffs.bin"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'echo "Select flashing mode:"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'echo "1. Update firmware only (preserves settings)"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'echo "2. Full installation (erases all settings)"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'read -p "Enter option (1/2): " MODE' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'if [ "$MODE" = "1" ]; then' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    echo "Updating firmware only - settings will be preserved..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    echo "Flashing firmware..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    esptool.py --chip esp32 --port $PORT --baud 921600 write_flash -z 0x10000 $FIRMWARE' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    echo "Firmware update complete!"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'elif [ "$MODE" = "2" ]; then' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    echo "Performing full installation - ALL SETTINGS WILL BE ERASED!"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    echo "Erasing flash..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    esptool.py --chip esp32 --port $PORT --baud 921600 erase_flash' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    echo "Flashing bootloader and partition table..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    esptool.py --chip esp32 --port $PORT --baud 921600 write_flash 0x1000 bootloader.bin 0x8000 partitions.bin' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    echo "Flashing firmware..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    esptool.py --chip esp32 --port $PORT --baud 921600 write_flash 0x10000 $FIRMWARE' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    echo "Flashing filesystem..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    esptool.py --chip esp32 --port $PORT --baud 921600 write_flash 0x310000 $SPIFFS' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    echo "Full installation complete! Device will start in setup mode."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'else' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    echo "Invalid option selected. Please run the script again."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo '    exit 1' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'fi' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'echo' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'echo "Note: If you need to change the port, edit this file and change:"' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'echo "  PORT=\"/dev/ttyUSB0\""' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'echo "to your correct port."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
-        echo 'read -p "Press Enter to exit..."' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
+        set FIRMWARE=opencoopcontrol_%REF_NAME%_firmware.bin
+        set SPIFFS=opencoopcontrol_%REF_NAME%_spiffs.bin
+        set BOOTLOADER=bootloader.bin
+        set PARTITIONS=partitions.bin
+
+        REM Check if files exist
+        if not exist "%FIRMWARE%" (
+            echo Error: Firmware file (%FIRMWARE%) not found in current directory!
+            goto :exit
+        )
+
+        if not exist "%BOOTLOADER%" (
+            echo Error: Bootloader file (%BOOTLOADER%) not found in current directory!
+            goto :exit
+        )
+
+        if not exist "%PARTITIONS%" (
+            echo Error: Partitions file (%PARTITIONS%) not found in current directory!
+            goto :exit
+        )
+
+        set SPIFFS_EXISTS=true
+        if not exist "%SPIFFS%" (
+            echo Note: SPIFFS file (%SPIFFS%) not found, will skip filesystem installation.
+            set SPIFFS_EXISTS=false
+        )
+
+        REM List available COM ports
+        echo Scanning for available COM ports...
+        echo.
+        powershell -command "Get-WmiObject Win32_PnPEntity | Where-Object { $_.Name -match 'COM\d+' } | ForEach-Object { $_.Name } | Sort-Object"
+        echo.
+
+        set /p PORT="Enter COM port (e.g., COM3): "
+
+        REM Validate COM port format
+        set PORT=%PORT: =%
+        if "%PORT:~0,3%" neq "COM" (
+            set PORT=COM%PORT%
+        )
+
+        echo Using port: %PORT%
+        echo.
+
+        echo Select flashing mode:
+        echo 1. Update firmware only (preserves settings)
+        echo 2. Full installation (erases all settings)
+        echo.
+
+        set /p MODE="Enter option (1/2): "
+
+        if "%MODE%"=="1" (
+            echo.
+            echo Updating firmware only - settings will be preserved...
+            echo.
+            
+            echo Flashing firmware...
+            esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash -z 0x10000 %FIRMWARE%
+            if %ERRORLEVEL% neq 0 (
+                echo Error flashing firmware. Please try again.
+                goto :exit
+            )
+            
+            echo.
+            echo Firmware update complete!
+        ) else if "%MODE%"=="2" (
+            echo.
+            echo Performing full installation - ALL SETTINGS WILL BE ERASED!
+            echo.
+            
+            echo Erasing flash...
+            esptool.py --chip esp32 --port %PORT% --baud 921600 erase_flash
+            if %ERRORLEVEL% neq 0 (
+                echo Error erasing flash. Please try again.
+                goto :exit
+            )
+            
+            echo Flashing bootloader and partition table...
+            esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x1000 %BOOTLOADER% 0x8000 %PARTITIONS%
+            if %ERRORLEVEL% neq 0 (
+                echo Error flashing bootloader or partitions. Please try again.
+                goto :exit
+            )
+            
+            echo Flashing firmware...
+            esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x10000 %FIRMWARE%
+            if %ERRORLEVEL% neq 0 (
+                echo Error flashing firmware. Please try again.
+                goto :exit
+            )
+            
+            if "%SPIFFS_EXISTS%"=="true" (
+                echo Flashing filesystem...
+                esptool.py --chip esp32 --port %PORT% --baud 921600 write_flash 0x310000 %SPIFFS%
+                if %ERRORLEVEL% neq 0 (
+                    echo Error flashing filesystem. Please try again.
+                    goto :exit
+                )
+            ) else (
+                echo Skipping filesystem flashing (SPIFFS file not found).
+            )
+            
+            echo.
+            echo Full installation complete! Device will start in setup mode.
+        ) else (
+            echo Invalid option selected. Please run the script again.
+            goto :exit
+        )
+
+        echo.
+
+        :exit
+        echo.
+        pause
+        EOL
+                sed -i "s/%REF_NAME%/${{ github.ref_name || 'test' }}/g" ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
+
+            - name: Generate Linux/Mac flash script
+              run: |
+                cat > ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh << 'EOL'
+        #!/bin/bash
+        echo "OpenCoopControl Flashing Tool"
+        echo "============================"
+        echo
+
+        # Detect operating system
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS
+            echo "Detected macOS system"
+            echo "Scanning for available ports..."
+            
+            # Create array of available ports
+            ports=()
+            
+            # Find available serial ports
+            mac_ports=$(ls /dev/cu.* 2>/dev/null)
+            if [ -z "$mac_ports" ]; then
+                echo "No serial ports found. Make sure your ESP32 is connected."
+                echo "You might need to install the driver: https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers"
+                exit 1
+            fi
+            
+            # Add each port to the array
+            while read -r port; do
+                if [[ "$port" != *"Bluetooth"* ]]; then
+                    ports+=("$port")
+                fi
+            done <<< "$mac_ports"
+            
+        elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            # Linux
+            echo "Detected Linux system"
+            echo "Scanning for available ports..."
+            
+            # Create array of available ports
+            ports=()
+            
+            # Common Linux ports for ESP32
+            for port in /dev/ttyUSB* /dev/ttyACM*; do
+                if [ -e "$port" ]; then
+                    ports+=("$port")
+                fi
+            done
+            
+            if [ ${#ports[@]} -eq 0 ]; then
+                echo "No serial ports found. Make sure your ESP32 is connected."
+                echo "You might need to add your user to the 'dialout' group:"
+                echo "sudo usermod -a -G dialout \$USER"
+                echo "Then log out and log back in."
+                exit 1
+            fi
+        else
+            # Default to /dev/ttyUSB0 for other systems
+            ports=("/dev/ttyUSB0")
+            echo "NOTE: For Windows users, run the .bat script instead!"
+        fi
+
+        # If multiple ports found, let user select
+        if [ ${#ports[@]} -gt 1 ]; then
+            echo
+            echo "Multiple serial ports found. Please select the correct port:"
+            for i in "${!ports[@]}"; do
+                echo "  $((i+1)). ${ports[$i]}"
+            done
+            echo
+            
+            # Prompt user to select a port
+            selected=0
+            while [ $selected -lt 1 ] || [ $selected -gt ${#ports[@]} ]; do
+                read -p "Enter port number (1-${#ports[@]}): " selected
+                if ! [[ "$selected" =~ ^[0-9]+$ ]]; then
+                    selected=0
+                fi
+            done
+            
+            PORT="${ports[$((selected-1))]}"
+        elif [ ${#ports[@]} -eq 1 ]; then
+            PORT="${ports[0]}"
+            echo "Found port: $PORT"
+        else
+            echo "No ports found. Please check your connection."
+            exit 1
+        fi
+
+        echo "Using port: $PORT"
+        echo
+
+        # Binary files
+        FIRMWARE="opencoopcontrol_%REF_NAME%_firmware.bin"
+        SPIFFS="opencoopcontrol_%REF_NAME%_spiffs.bin"
+        BOOTLOADER="bootloader.bin"
+        PARTITIONS="partitions.bin"
+
+        # Check if files exist
+        if [ ! -f "$FIRMWARE" ]; then
+            echo "Error: Firmware file ($FIRMWARE) not found in current directory!"
+            exit 1
+        fi
+
+        if [ ! -f "$BOOTLOADER" ]; then
+            echo "Error: Bootloader file ($BOOTLOADER) not found in current directory!"
+            exit 1
+        fi
+
+        if [ ! -f "$PARTITIONS" ]; then
+            echo "Error: Partitions file ($PARTITIONS) not found in current directory!"
+            exit 1
+        fi
+
+        # SPIFFS is optional
+        SPIFFS_EXISTS=true
+        if [ ! -f "$SPIFFS" ]; then
+            echo "Note: SPIFFS file ($SPIFFS) not found, will skip filesystem installation."
+            SPIFFS_EXISTS=false
+        fi
+
+        echo "Select flashing mode:"
+        echo "1. Update firmware only (preserves settings)"
+        echo "2. Full installation (erases all settings)"
+        echo
+
+        read -p "Enter option (1/2): " MODE
+
+        if [ "$MODE" = "1" ]; then
+            echo
+            echo "Updating firmware only - settings will be preserved..."
+            echo
+            
+            echo "Flashing firmware..."
+            esptool.py --chip esp32 --port "$PORT" --baud 921600 write_flash -z 0x10000 "$FIRMWARE"
+            if [ $? -ne 0 ]; then
+                echo "Error flashing firmware. Please try again."
+                exit 1
+            fi
+            
+            echo
+            echo "Firmware update complete!"
+
+        elif [ "$MODE" = "2" ]; then
+            echo
+            echo "Performing full installation - ALL SETTINGS WILL BE ERASED!"
+            echo
+            
+            echo "Erasing flash..."
+            esptool.py --chip esp32 --port "$PORT" --baud 921600 erase_flash
+            if [ $? -ne 0 ]; then
+                echo "Error erasing flash. Please try again."
+                exit 1
+            fi
+            
+            echo "Flashing bootloader and partition table..."
+            esptool.py --chip esp32 --port "$PORT" --baud 921600 write_flash 0x1000 "$BOOTLOADER" 0x8000 "$PARTITIONS"
+            if [ $? -ne 0 ]; then
+                echo "Error flashing bootloader or partitions. Please try again."
+                exit 1
+            fi
+            
+            echo "Flashing firmware..."
+            esptool.py --chip esp32 --port "$PORT" --baud 921600 write_flash 0x10000 "$FIRMWARE"
+            if [ $? -ne 0 ]; then
+                echo "Error flashing firmware. Please try again."
+                exit 1
+            fi
+            
+            if [ "$SPIFFS_EXISTS" = true ]; then
+                echo "Flashing filesystem..."
+                esptool.py --chip esp32 --port "$PORT" --baud 921600 write_flash 0x310000 "$SPIFFS"
+                if [ $? -ne 0 ]; then
+                    echo "Error flashing filesystem. Please try again."
+                    exit 1
+                fi
+            else
+                echo "Skipping filesystem flashing (SPIFFS file not found)."
+            fi
+            
+            echo
+            echo "Full installation complete! Device will start in setup mode."
+        else
+            echo "Invalid option selected. Please run the script again."
+            exit 1
+        fi
+
+        echo
+        echo "If you need to change the port in the future, run this script again and select a different port."
+        echo
+        read -p "Press Enter to exit..."
+        EOL
+        sed -i "s/%REF_NAME%/${{ github.ref_name || 'test' }}/g" ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
         chmod +x ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.sh
 
     - name: Prepare release assets with fallbacks
