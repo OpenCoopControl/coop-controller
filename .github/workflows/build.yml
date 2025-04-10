@@ -33,12 +33,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install platformio
     
-    - name: Debug PlatformIO configuration
-      run: |
-        echo "=== platformio.ini content ==="
-        cat platformio.ini
-        echo "============================"
-    
     - name: Build firmware with verbose
       run: |
         platformio run -e esp32dev -v
@@ -58,13 +52,6 @@ jobs:
           echo "Error: firmware.bin is empty after build!"
           exit 1
         fi
-    
-    - name: Debug build output
-      run: |
-        echo "=== .pio/build directory ==="
-        find .pio/build -type f -name "*.bin" | sort
-        ls -la .pio/build/esp32dev/
-        echo "============================"
     
     - name: Upload firmware artifacts
       uses: actions/upload-artifact@v4
@@ -89,12 +76,6 @@ jobs:
         name: firmware
         path: ./dist
     
-    - name: Debug downloaded artifacts
-      run: |
-        echo "=== Contents of dist directory ==="
-        ls -la ./dist/
-        echo "=================================="
-    
     - name: Create release directories
       run: mkdir -p ./release
     
@@ -112,7 +93,8 @@ jobs:
         echo 'echo Select flashing mode:' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo 'echo 1. Update firmware only (preserves settings)' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo 'echo 2. Full installation (erases all settings)' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
-        echo 'echo.'        echo 'set /p MODE="Enter option (1/2): "' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
+        echo 'echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
+        echo 'set /p MODE="Enter option (1/2): "' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo 'if "%MODE%"=="1" (' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
         echo '    echo.' >> ./release/flash_opencoopcontrol_${{ github.ref_name || 'test' }}.bat
@@ -191,81 +173,61 @@ jobs:
 
     - name: Prepare release assets with fallbacks
       run: |
-          echo "Looking for firmware.bin..."
-          find ./dist -name "firmware.bin" || echo "firmware.bin not found"
-          if [ -f "./dist/firmware.bin" ]; then
-            echo "firmware.bin size:"
-            ls -l ./dist/firmware.bin
-          fi
-          
-          echo "Looking for any SPIFFS files..."
-          find ./dist -name "*spiffs*" || echo "No SPIFFS files found"
-          
-          echo "Looking for bootloader.bin..."
-          find ./dist -name "bootloader.bin" || echo "bootloader.bin not found"
-          
-          echo "Looking for partitions.bin..."
-          find ./dist -name "partitions.bin" || echo "partitions.bin not found"
-          
-          # Copy firmware with fallbacks
-          if [ -f "./dist/firmware.bin" ] && [ -s "./dist/firmware.bin" ]; then
-            cp ./dist/firmware.bin ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_firmware.bin
+        # Copy firmware with fallbacks
+        if [ -f "./dist/firmware.bin" ] && [ -s "./dist/firmware.bin" ]; then
+          cp ./dist/firmware.bin ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_firmware.bin
+        else
+          FIRMWARE_ALT=$(find ./dist -name "*firmware*.bin" | head -1)
+          if [ ! -z "$FIRMWARE_ALT" ] && [ -s "$FIRMWARE_ALT" ]; then
+            echo "Using alternative firmware file: $FIRMWARE_ALT"
+            cp "$FIRMWARE_ALT" ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_firmware.bin
           else
-            FIRMWARE_ALT=$(find ./dist -name "*firmware*.bin" | head -1)
-            if [ ! -z "$FIRMWARE_ALT" ] && [ -s "$FIRMWARE_ALT" ]; then
-              echo "Using alternative firmware file: $FIRMWARE_ALT"
-              cp "$FIRMWARE_ALT" ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_firmware.bin
-            else
-              echo "Error: No non-empty firmware file found!"
-              ls -la ./dist/
-              exit 1
-            fi
+            echo "Error: No non-empty firmware file found!"
+            ls -la ./dist/
+            exit 1
           fi
-          
-          # Copy SPIFFS with fallbacks
-          if [ -f "./dist/spiffs.bin" ] && [ -s "./dist/spiffs.bin" ]; then
-            cp ./dist/spiffs.bin ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_spiffs.bin
+        fi
+        
+        # Copy SPIFFS with fallbacks
+        if [ -f "./dist/spiffs.bin" ] && [ -s "./dist/spiffs.bin" ]; then
+          cp ./dist/spiffs.bin ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_spiffs.bin
+        else
+          SPIFFS_ALT=$(find ./dist -name "*spiffs*.bin" | head -1)
+          if [ ! -z "$SPIFFS_ALT" ] && [ -s "$SPIFFS_ALT" ]; then
+            echo "Using alternative SPIFFS file: $SPIFFS_ALT"
+            cp "$SPIFFS_ALT" ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_spiffs.bin
           else
-            SPIFFS_ALT=$(find ./dist -name "*spiffs*.bin" | head -1)
-            if [ ! -z "$SPIFFS_ALT" ] && [ -s "$SPIFFS_ALT" ]; then
-              echo "Using alternative SPIFFS file: $SPIFFS_ALT"
-              cp "$SPIFFS_ALT" ./release/opencoopcontrol_${{ github.ref_name || 'test' }}_spiffs.bin
-            else
-              echo "No valid SPIFFS file found, skipping (optional)"
-            fi
+            echo "No valid SPIFFS file found, skipping (optional)"
           fi
-          
-          # Copy bootloader with fallbacks
-          if [ -f "./dist/bootloader.bin" ] && [ -s "./dist/bootloader.bin" ]; then
-            cp ./dist/bootloader.bin ./release/bootloader.bin
+        fi
+        
+        # Copy bootloader with fallbacks
+        if [ -f "./dist/bootloader.bin" ] && [ -s "./dist/bootloader.bin" ]; then
+          cp ./dist/bootloader.bin ./release/bootloader.bin
+        else
+          BOOTLOADER_ALT=$(find ./dist -name "*bootloader*.bin" | head -1)
+          if [ ! -z "$BOOTLOADER_ALT" ] && [ -s "$BOOTLOADER_ALT" ]; then
+            echo "Using alternative bootloader file: $BOOTLOADER_ALT"
+            cp "$BOOTLOADER_ALT" ./release/bootloader.bin
           else
-            BOOTLOADER_ALT=$(find ./dist -name "*bootloader*.bin" | head -1)
-            if [ ! -z "$BOOTLOADER_ALT" ] && [ -s "$BOOTLOADER_ALT" ]; then
-              echo "Using alternative bootloader file: $BOOTLOADER_ALT"
-              cp "$BOOTLOADER_ALT" ./release/bootloader.bin
-            else
-              echo "No bootloader file found!"
-              exit 1
-            fi
+            echo "No bootloader file found!"
+            exit 1
           fi
-          
-          # Copy partitions with fallbacks
-          if [ -f "./dist/partitions.bin" ] && [ -s "./dist/partitions.bin" ]; then
-            cp ./dist/partitions.bin ./release/partitions.bin
+        fi
+        
+        # Copy partitions with fallbacks
+        if [ -f "./dist/partitions.bin" ] && [ -s "./dist/partitions.bin" ]; then
+          cp ./dist/partitions.bin ./release/partitions.bin
+        else
+          PARTITIONS_ALT=$(find ./dist -name "*partitions*.bin" | head -1)
+          if [ ! -z "$PARTITIONS_ALT" ] && [ -s "$PARTITIONS_ALT" ]; then
+            echo "Using alternative partitions file: $PARTITIONS_ALT"
+            cp "$PARTITIONS_ALT" ./release/partitions.bin
           else
-            PARTITIONS_ALT=$(find ./dist -name "*partitions*.bin" | head -1)
-            if [ ! -z "$PARTITIONS_ALT" ] && [ -s "$PARTITIONS_ALT" ]; then
-              echo "Using alternative partitions file: $PARTITIONS_ALT"
-              cp "$PARTITIONS_ALT" ./release/partitions.bin
-            else
-              echo "No partitions file found!"
-              exit 1
-            fi
+            echo "No partitions file found!"
+            exit 1
           fi
-          
-          echo "=== Contents of release directory ==="
-          ls -la ./release/
-          echo "=================================="
+        fi
 
     - name: Upload release assets
       uses: softprops/action-gh-release@v2
@@ -278,7 +240,7 @@ jobs:
           ./release/partitions.bin
           ./release/flash_opencoopcontrol_${{ github.ref_name }}.bat
           ./release/flash_opencoopcontrol_${{ github.ref_name }}.sh
-        token: ${{ secrets.RELEASE_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}
           
     - name: Upload test assets
       uses: actions/upload-artifact@v4
