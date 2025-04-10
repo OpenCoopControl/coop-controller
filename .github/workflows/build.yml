@@ -41,15 +41,11 @@ jobs:
     
     - name: Build firmware with verbose
       run: |
-          platformio run -e esp32dev -v --target buildfs
-          echo "Running esptool.py manually..."
-          /opt/hostedtoolcache/Python/3.12.9/x64/bin/python /home/runner/.platformio/packages/tool-esptoolpy/esptool.py \
-            --chip esp32 elf2image --flash_mode dio --flash_freq 40m --flash_size 4MB \
-            --elf-sha256-offset 0xb0 -o .pio/build/esp32dev/firmware.bin .pio/build/esp32dev/firmware.elf
-          echo "Checking firmware.bin size after esptool.py:"
+          platformio run -e esp32dev -v
+          echo "Checking firmware.bin size after build:"
           ls -la .pio/build/esp32dev/firmware.bin
           if [ ! -s .pio/build/esp32dev/firmware.bin ]; then
-            echo "Error: firmware.bin is empty after esptool.py!"
+            echo "Error: firmware.bin is empty after build!"
             exit 1
           fi
     
